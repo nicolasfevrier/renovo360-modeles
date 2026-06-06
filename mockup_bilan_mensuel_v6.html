@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bilan Mensuel — Renovo360 v6</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: #1f2933;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    margin: 0;
+    padding: 20px;
+    background: #fafafa;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  .header { border-bottom: 3px solid #1a4d2e; padding-bottom: 14px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header .brand { font-size: 22pt; font-weight: 700; color: #1a4d2e; letter-spacing: 0.5px; line-height: 1; }
+  .header .tagline { font-size: 9pt; color: #6b7280; margin-top: 4px; letter-spacing: 1.2px; text-transform: uppercase; }
+  .header-right { text-align: right; font-size: 8.5pt; color: #6b7280; line-height: 1.5; }
+  .title-block { margin-bottom: 24px; }
+  .title-block h1 { font-size: 18pt; color: #1a4d2e; margin: 0 0 4px 0; }
+  .title-block .meta { font-size: 10pt; color: #6b7280; }
+  .title-block .formule { display: inline-block; background: #d4a574; color: white; padding: 2px 10px; border-radius: 10px; font-size: 9pt; font-weight: 600; margin-left: 8px; vertical-align: middle; letter-spacing: 0.3px; }
+  .scores-banner { display: flex; gap: 8px; margin-bottom: 28px; }
+  .score-card { flex: 1; background: white; border-left: 4px solid #1a4d2e; padding: 12px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .score-card .label { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280; margin-bottom: 4px; font-weight: 600; }
+  .score-card .value { font-size: 22pt; font-weight: 700; color: #1a4d2e; line-height: 1; }
+  .score-card .value .unit { font-size: 10pt; color: #9ca3af; font-weight: 400; }
+  .score-card .trend { font-size: 9pt; color: #6b7280; margin-top: 4px; }
+  .score-card.alert { border-left-color: #c2410c; }
+  .score-card.alert .value { color: #c2410c; }
+  .score-card.warning { border-left-color: #d97706; }
+  .score-card.warning .value { color: #d97706; }
+
+  .pilier { margin-bottom: 24px; page-break-inside: avoid; background: white; border: 2px solid #1a4d2e; border-radius: 8px; padding: 18px 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+  .pilier-header { display: flex; align-items: baseline; border-bottom: 2px solid #1a4d2e; padding-bottom: 10px; margin-bottom: 18px; }
+  .pilier-header .pilier-num { font-size: 9pt; color: #d4a574; font-weight: 700; letter-spacing: 1.2px; margin-right: 12px; }
+  .pilier-header h2 { margin: 0; font-size: 16pt; color: #1a4d2e; flex-grow: 1; }
+
+  /* ===== Format carré + variables (avec référence optimal) ===== */
+  .score-block {
+    margin-bottom: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .score-block:last-child { margin-bottom: 0; }
+  
+  .score-row {
+    display: flex;
+    gap: 14px;
+    background: #fafbf9;
+    padding: 14px;
+  }
+  .score-block.alert .score-row { background: #fef7f4; }
+  .score-block.warning .score-row { background: #fefaf3; }
+
+  .score-box {
+    flex: 0 0 130px;
+    background: white;
+    border-left: 4px solid #1a4d2e;
+    border-radius: 6px;
+    padding: 12px 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .score-block.alert .score-box { border-left-color: #c2410c; }
+  .score-block.warning .score-box { border-left-color: #d97706; }
+  .score-box .emoji { font-size: 24pt; line-height: 1; margin-bottom: 4px; }
+  .score-box .name { font-size: 11pt; font-weight: 700; color: #1a4d2e; margin-bottom: 8px; line-height: 1.1; }
+  .score-block.alert .score-box .name { color: #c2410c; }
+  .score-block.warning .score-box .name { color: #d97706; }
+  .score-box .big-score { font-size: 22pt; font-weight: 700; color: #1a4d2e; line-height: 1; }
+  .score-block.alert .score-box .big-score { color: #c2410c; }
+  .score-block.warning .score-box .big-score { color: #d97706; }
+  .score-box .big-score .unit { font-size: 11pt; color: #9ca3af; font-weight: 400; }
+  .score-box .trend { font-size: 9pt; color: #6b7280; margin-top: 6px; background: #f3f4f6; padding: 2px 8px; border-radius: 10px; display: inline-block; }
+
+  .score-vars { flex: 1; display: grid; gap: 6px 14px; align-content: center; }
+  .score-vars.cols-2 { grid-template-columns: 1fr 1fr; }
+  .score-vars.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .score-vars .var {
+    background: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border-left: 3px solid #d4a574;
+    font-size: 9.5pt;
+  }
+  .score-vars .var .var-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .score-vars .var .var-label { color: #1f2933; font-weight: 500; }
+  .score-vars .var .var-value { color: #1a4d2e; font-weight: 700; }
+  .score-vars .var .var-ref { color: #9ca3af; font-size: 8.5pt; font-style: italic; margin-top: 2px; line-height: 1.2; }
+
+  /* Conclusion DÉTAILLÉE par score (différenciation MENSUEL vs hebdo) */
+  .score-conclusion {
+    background: white;
+    border-top: 1px dashed #d1d5db;
+    padding: 12px 14px;
+    border-left: 3px solid #1a4d2e;
+    margin-left: 14px;
+    margin-right: 14px;
+    margin-bottom: 14px;
+    border-radius: 0 0 4px 4px;
+  }
+  .score-block.alert .score-conclusion { border-left-color: #c2410c; }
+  .score-block.warning .score-conclusion { border-left-color: #d97706; }
+  .score-conclusion .label {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #1a4d2e;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .score-block.alert .score-conclusion .label { color: #c2410c; }
+  .score-block.warning .score-conclusion .label { color: #d97706; }
+  .score-conclusion .text {
+    font-size: 10pt;
+    color: #374151;
+    line-height: 1.6;
+  }
+  .score-conclusion .signature {
+    font-size: 8.5pt;
+    color: #d4a574;
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  /* ===== TABLEAU DÉCLARATIF ===== */
+  .declaratif-table { background: white; padding: 12px 14px; border-radius: 4px; border-left: 3px solid #d4a574; margin-bottom: 12px; }
+  .declaratif-table table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  .declaratif-table td { padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+  .declaratif-table td.label { color: #6b7280; font-weight: 500; }
+  .declaratif-table td.value { text-align: right; color: #1a4d2e; font-weight: 600; }
+  .declaratif-table tr:last-child td { border-bottom: none; }
+
+  /* ===== Le mot des coachs ===== */
+  .coach-comment { padding: 12px 14px; background: #fef9f3; border-radius: 4px; border-left: 3px solid #1a4d2e; }
+  .coach-comment .label { font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #1a4d2e; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .coach-comment .signature { font-size: 8.5pt; color: #d4a574; font-style: italic; margin-top: 4px; }
+  .coach-comment .text { font-size: 10pt; color: #374151; line-height: 1.6; }
+
+  .soupape { background: white; padding: 12px 14px; border-radius: 4px; border-left: 3px solid #6366f1; margin-bottom: 12px; font-size: 10pt; color: #374151; font-style: italic; }
+  .soupape .label { font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #6366f1; font-weight: 600; margin-bottom: 4px; font-style: normal; display: flex; align-items: center; gap: 6px; }
+  .vie-sociale { background: white; padding: 12px 14px; border-radius: 4px; border-left: 3px solid #8b5cf6; margin-bottom: 12px; font-size: 10pt; color: #374151; }
+  .vie-sociale .label { font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #8b5cf6; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .vie-sociale .event-tag { display: inline-block; background: #f3f0ff; color: #5b21b6; padding: 2px 8px; border-radius: 10px; font-size: 9pt; margin-right: 4px; margin-bottom: 2px; }
+
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 8pt; color: #9ca3af; text-align: center; line-height: 1.6; }
+  .footer .mention { margin-top: 8px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="brand">RENOVO360</div>
+    <div class="tagline">Coaching santé &amp; performance</div>
+  </div>
+  <div class="header-right">
+    Bilan généré le 3 juillet 2026<br>par Nicolas, coach<br>&amp; Lydia, pharmacienne
+  </div>
+</div>
+
+<div class="title-block">
+  <h1>Bilan mensuel — Marc Dupont
+    <span class="formule">Signature</span>
+  </h1>
+  <div class="meta">Juin 2026 · 30 jours mesurés</div>
+</div>
+
+<div class="scores-banner">
+  <div class="score-card"><div class="label">🌙 Sommeil</div><div class="value">78<span class="unit">/100</span></div><div class="trend">↗ +6 vs mois dernier</div></div>
+  <div class="score-card"><div class="label">🔋 Récup</div><div class="value">73<span class="unit">/100</span></div><div class="trend">→ stable</div></div>
+  <div class="score-card"><div class="label">⚖️ Stress</div><div class="value">71<span class="unit">/100</span></div><div class="trend">↗ amélioration</div></div>
+  <div class="score-card alert"><div class="label">🏃 Perf</div><div class="value">45<span class="unit">/100</span></div><div class="trend">↘ baisse marquée</div></div>
+  <div class="score-card warning"><div class="label">📈 Trajec</div><div class="value">74<span class="unit">/100</span></div><div class="trend">→ stable</div></div>
+</div>
+
+
+<!-- ===== ANALYSE — 5 scores avec conclusion DÉTAILLÉE par score ===== -->
+<div class="pilier">
+  <div class="pilier-header"><span class="pilier-num">ANALYSE</span><h2>📊 Tes 5 scores du mois</h2></div>
+
+  <!-- SOMMEIL -->
+  <div class="score-block">
+    <div class="score-row">
+      <div class="score-box">
+        <div class="emoji">🌙</div>
+        <div class="name">Sommeil</div>
+        <div class="big-score">78<span class="unit">/100</span></div>
+        <div class="trend">↗ +6 vs mois</div>
+      </div>
+      <div class="score-vars cols-2">
+        <div class="var">
+          <div class="var-row"><span class="var-label">Durée moyenne</span><span class="var-value">7h12</span></div>
+          <div class="var-ref">optimal 7h30 – 9h</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Efficacité moyenne</span><span class="var-value">86%</span></div>
+          <div class="var-ref">optimal ≥ 90%</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Régularité moyenne</span><span class="var-value">48 min</span></div>
+          <div class="var-ref">optimal &lt; 30 min</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Sommeil profond moyen</span><span class="var-value">17%</span></div>
+          <div class="var-ref">optimal 15 – 23%</div>
+        </div>
+      </div>
+    </div>
+    <div class="score-conclusion">
+      <div class="label">💬 Conclusion terrain</div>
+      <div class="text">Mois solide côté sommeil. <strong>La régularité du coucher est ton acquis du mois</strong> — tu as bien intégré le rituel d'avant 23h, et c'est ce qui tire ton score vers le haut. La durée moyenne (7h12) reste sous l'optimal mais avec une vraie tendance positive (+15 min vs mai). Pour juillet, on stabilise sur 7h30 minimum chaque nuit — c'est ça qui débloquera l'efficacité.</div>
+      <div class="signature">— Nicolas</div>
+    </div>
+  </div>
+
+  <!-- RÉCUPÉRATION -->
+  <div class="score-block">
+    <div class="score-row">
+      <div class="score-box">
+        <div class="emoji">🔋</div>
+        <div class="name">Récupération</div>
+        <div class="big-score">73<span class="unit">/100</span></div>
+        <div class="trend">→ stable</div>
+      </div>
+      <div class="score-vars cols-2">
+        <div class="var">
+          <div class="var-row"><span class="var-label">HRV moyenne</span><span class="var-value">50 ms</span></div>
+          <div class="var-ref">optimal ≥ baseline (51)</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">FC repos moyenne</span><span class="var-value">62 bpm</span></div>
+          <div class="var-ref">optimal ≤ baseline (62)</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">FC min nocturne</span><span class="var-value">56 bpm</span></div>
+          <div class="var-ref">optimal ≤ baseline (57)</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Variation T° nocturne</span><span class="var-value">-0.1 °C</span></div>
+          <div class="var-ref">optimal ± 0.1 °C</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Temps restauratif moyen</span><span class="var-value">1h22</span></div>
+          <div class="var-ref">optimal ≥ 1h30</div>
+        </div>
+      </div>
+    </div>
+    <div class="score-conclusion">
+      <div class="label">💬 Conclusion terrain</div>
+      <div class="text">Récupération stable sur le mois, ce qui montre que ton corps tient bien la charge actuelle. <strong>Pas d'effondrement, pas de surcompensation</strong> — c'est exactement la zone qu'on cherche pour progresser sereinement. La HRV à 50 ms (très proche baseline) et la température nocturne stable sont les meilleurs indicateurs : tu n'es ni sur-stressé, ni en récupération insuffisante. Le seul axe à travailler : pousser le temps restauratif au-dessus de 1h30 — directement lié à la qualité des phases profondes.</div>
+      <div class="signature">— Nicolas</div>
+    </div>
+  </div>
+
+  <!-- STRESS LOAD -->
+  <div class="score-block">
+    <div class="score-row">
+      <div class="score-box">
+        <div class="emoji">⚖️</div>
+        <div class="name">Stress Load</div>
+        <div class="big-score">71<span class="unit">/100</span></div>
+        <div class="trend">↗ amélioration</div>
+      </div>
+      <div class="score-vars cols-2">
+        <div class="var">
+          <div class="var-row"><span class="var-label">Stress physiologique</span><span class="var-value">Faible 19j</span></div>
+          <div class="var-ref">optimal : Faible / Très faible</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">HRV moyenne</span><span class="var-value">50 ms</span></div>
+          <div class="var-ref">optimal ≥ baseline (51)</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Résilience</span><span class="var-value">Bonne 16j</span></div>
+          <div class="var-ref">optimal : Bonne / Exceptionnelle</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">FC repos moyenne</span><span class="var-value">62 bpm</span></div>
+          <div class="var-ref">optimal ≤ baseline (62)</div>
+        </div>
+      </div>
+    </div>
+    <div class="score-conclusion">
+      <div class="label">💬 Conclusion terrain</div>
+      <div class="text">Belle régulation sur le mois, avec seulement <strong>2 jours en stress élevé</strong> (probablement vendredi 12 et lundi 22 — corrélé avec ce que tu as signalé). Les exercices de respiration cohérente que tu as mis en place tiennent visiblement. La résilience "Bonne" sur 16 jours est aussi un excellent signe : ton système nerveux récupère bien entre les charges. Pour juillet, on continue tel quel sur ce volet — c'est ton acquis du mois.</div>
+      <div class="signature">— Nicolas</div>
+    </div>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div class="score-block alert">
+    <div class="score-row">
+      <div class="score-box">
+        <div class="emoji">🏃</div>
+        <div class="name">Performance</div>
+        <div class="big-score">45<span class="unit">/100</span></div>
+        <div class="trend">↘ baisse marquée</div>
+      </div>
+      <div class="score-vars cols-3">
+        <div class="var">
+          <div class="var-row"><span class="var-label">Pas quotidiens</span><span class="var-value">5 920</span></div>
+          <div class="var-ref">optimal ≥ 8 000/jour</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Cal. actives</span><span class="var-value">285 kcal</span></div>
+          <div class="var-ref">optimal ≥ 500 kcal</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">HRV</span><span class="var-value">50 ms</span></div>
+          <div class="var-ref">optimal ≥ baseline</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Durée sommeil</span><span class="var-value">7h12</span></div>
+          <div class="var-ref">optimal 7h30 – 9h</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Fréq. activité</span><span class="var-value">1.8</span></div>
+          <div class="var-ref">optimal ≥ 6 périodes</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Inactivité</span><span class="var-value">8h45</span></div>
+          <div class="var-ref">optimal &lt; 6h/jour</div>
+        </div>
+      </div>
+    </div>
+    <div class="score-conclusion">
+      <div class="label">💬 Conclusion terrain</div>
+      <div class="text">Score qui confirme ce qu'on voit depuis 2 mois : <strong>ton activité reste insuffisante face à ton potentiel</strong>. La bonne nouvelle : tu as gagné +600 pas/jour en moyenne vs mai, et tu as commencé à intégrer 1.8 périodes actives par jour. C'est positif mais largement en deçà de l'optimal (6+ périodes). <strong>Sur juillet, l'objectif clair</strong> : 7 000 pas/jour minimum, 3 séances actives par semaine, et casser la sédentarité sur les après-midi de travail (alarme toutes les 90 min). C'est le levier #1 pour faire bouger Performance ET Trajectoire.</div>
+      <div class="signature">— Nicolas</div>
+    </div>
+  </div>
+
+  <!-- TRAJECTOIRE -->
+  <div class="score-block warning">
+    <div class="score-row">
+      <div class="score-box">
+        <div class="emoji">📈</div>
+        <div class="name">Trajectoire santé</div>
+        <div class="big-score">74<span class="unit">/100</span></div>
+        <div class="trend">→ stable</div>
+      </div>
+      <div class="score-vars cols-3">
+        <div class="var">
+          <div class="var-row"><span class="var-label">Masse grasse</span><span class="var-value">18.2%</span></div>
+          <div class="var-ref">optimal H 10–22%</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Masse musc.</span><span class="var-value">71.5%</span></div>
+          <div class="var-ref">optimal : Élevée</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Gr. viscérale</span><span class="var-value">5.0</span></div>
+          <div class="var-ref">optimal : Basse</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Âge vasculaire</span><span class="var-value">46 ans</span></div>
+          <div class="var-ref">optimal ≤ âge réel (45)</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">VOP</span><span class="var-value">6.9 m/s</span></div>
+          <div class="var-ref">optimal &lt; 9 m/s</div>
+        </div>
+        <div class="var">
+          <div class="var-row"><span class="var-label">Santé nerveuse</span><span class="var-value">72</span></div>
+          <div class="var-ref">optimal : Bonne / Optimale</div>
+        </div>
+      </div>
+    </div>
+    <div class="score-conclusion">
+      <div class="label">💬 Conclusion terrain</div>
+      <div class="text"><strong>Profil corporel solide qui se maintient sur le mois.</strong> Masse grasse, masse musculaire et graisse viscérale sont dans des zones excellentes pour ton âge. L'âge vasculaire à 46 ans (vs ton âge réel 45) reste le seul point de vigilance — c'est directement lié à ton volume d'activité insuffisant. <strong>Mécaniquement, si tu remontes ton score Performance ce mois-ci, cet indicateur va suivre dans 2-3 mois</strong>. La vitesse d'onde de pouls à 6.9 m/s est très bonne — c'est ce qui maintient ton score global à 74 malgré l'âge vasculaire.</div>
+      <div class="signature">— Nicolas</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== SPORT ===== -->
+<div class="pilier">
+  <div class="pilier-header"><span class="pilier-num">SPORT</span><h2>🏋️ Ce que tu as fait</h2></div>
+
+  <div class="declaratif-table">
+    <table>
+      <tr><td class="label">🏃 Séances de cardio</td><td class="value">9 séances (≈ 2.3/sem)</td></tr>
+      <tr><td class="label">💪 Séances de renforcement</td><td class="value">5 séances (≈ 1.3/sem)</td></tr>
+      <tr><td class="label">🏡 Routines maison</td><td class="value">11 séances (≈ 2.8/sem)</td></tr>
+    </table>
+  </div>
+
+  <div class="coach-comment">
+    <div class="label">💬 Le mot du coach sport</div>
+    <div class="text">Bon mois côté volume — <strong>25 séances au total, c'est solide</strong>. Les routines maison (11) montrent une vraie régularité, à maintenir. Le point d'attention : le renforcement reste à 1.3 séances/semaine alors qu'on visait 2. Pour juillet, on monte à 2 séances renfo/sem, et on monte l'intensité d'une cardio en Z3 (20 min minimum). Tu progresses bien sur la régularité, on peut maintenant ajouter de l'exigence.</div>
+    <div class="signature">— Nicolas</div>
+  </div>
+</div>
+
+
+<!-- ===== NUTRITION ===== -->
+<div class="pilier">
+  <div class="pilier-header"><span class="pilier-num">NUTRITION</span><h2>🥗 Ton alimentation</h2></div>
+
+  <div class="declaratif-table">
+    <table>
+      <tr><td class="label">🍔 Aliments ultra-transformés</td><td class="value">Rares (3 sem/4)</td></tr>
+      <tr><td class="label">🥗 Équilibre de l'assiette</td><td class="value">La plupart respectés (3 sem/4)</td></tr>
+    </table>
+  </div>
+
+  <div class="coach-comment">
+    <div class="label">💬 Le mot du coach nutrition</div>
+    <div class="text">Mois globalement très propre côté alimentation. La semaine où les transformés sont remontés correspond probablement à ton <strong>voyage à Bordeaux (semaine du 16)</strong>. Sur juillet, attention aux jours d'entraînement : les calories actives augmentent légèrement, ton corps a besoin de glucides de qualité. Je propose qu'on regarde ensemble en consultation jeudi pour ajuster les apports les jours de cardio.</div>
+    <div class="signature">— Lydia</div>
+  </div>
+</div>
+
+
+<!-- ===== VITALITÉ ===== -->
+<div class="pilier">
+  <div class="pilier-header"><span class="pilier-num">VITALITÉ</span><h2>💊 Supplémentation &amp; énergie</h2></div>
+
+  <div class="declaratif-table">
+    <table>
+      <tr><td class="label">💊 Prise supplémentation</td><td class="value">7j/7 (3 sem/4)</td></tr>
+      <tr><td class="label">⚡ Énergie ressentie</td><td class="value">Bonne 19j · Moyenne 9j · Faible 2j</td></tr>
+    </table>
+  </div>
+
+  <div class="coach-comment">
+    <div class="label">💬 L'avis de la pharmacienne</div>
+    <div class="text"><strong>Bonne adhérence au protocole sur le mois (94% de prise).</strong> La semaine en demi-teinte (4-6 jours) correspond à ton voyage — on en avait parlé, c'est normal en déplacement. L'énergie ressentie est cohérente : 19 jours "Bonne" c'est satisfaisant. Les 2 jours "Faible" mériteront qu'on regarde précisément ce qui se passait (sommeil, alimentation, hydratation). En juillet je propose d'ajouter du magnésium bisglycinate le soir 30 min avant coucher — on évalue l'impact en août.</div>
+    <div class="signature">— Lydia</div>
+  </div>
+</div>
+
+
+<!-- ===== CAP ===== -->
+<div class="pilier">
+  <div class="pilier-header"><span class="pilier-num">CAP</span><h2>🎯 Ton cap pour juillet</h2></div>
+
+  <div class="vie-sociale">
+    <div class="label">🎉 Vie sociale du mois</div>
+    <div>
+      <span class="event-tag">3× Soirée tardive</span>
+      <span class="event-tag">5× Repas festif</span>
+      <span class="event-tag">2× Apéros</span>
+      <span class="event-tag">1× Voyage (sem 24)</span>
+    </div>
+  </div>
+
+  <div class="soupape">
+    <div class="label">💭 Ce que tu nous as dit ce mois-ci</div>
+    « Le voyage à Bordeaux semaine 24 m'a un peu décalé, j'ai mis 3-4 jours à reprendre le rythme. Sinon, le dos qui tirait au début du mois est passé après le RDV avec le kiné. Je sens que mes séances renfo sont plus stables maintenant. »
+  </div>
+
+  <div class="coach-comment">
+    <div class="label">🎯 Synthèse Nicolas + Lydia · Ton cap pour juillet 2026</div>
+    <div class="text"><strong>Priorité 1 — Pousser l'activité.</strong> Tu as commencé à remonter en juin (+600 pas/jour vs mai). Sur juillet, objectif 7 000 pas/jour minimum, et passage à 2 séances de renforcement par semaine. C'est le levier #1 pour faire bouger Performance ET Trajectoire santé.<br><br>
+    <strong>Priorité 2 — Stabiliser la nutrition les jours d'entraînement.</strong> RDV nutrition avec Lydia jeudi pour ajuster les apports glucidiques les jours de cardio. Pas de restriction, juste un calibrage.<br><br>
+    <strong>Priorité 3 — Test magnésium bisglycinate le soir.</strong> Lydia te prépare le protocole. On évalue l'impact sur la qualité du sommeil profond au prochain bilan mensuel d'août.<br><br>
+    <em style="color: #6b7280;">Sur ton voyage à Bordeaux : pas d'inquiétude, ton corps a bien encaissé (3-4 jours de récupération c'est dans la norme). Le fait que tu aies repris naturellement le rythme est un bon signe.</em></div>
+    <div class="signature">— Nicolas &amp; Lydia</div>
+  </div>
+</div>
+
+
+<div class="footer">
+  Renovo360 — Coaching premium santé &amp; performance · contact@renovo360.com
+  <div class="mention">Bilan mensuel personnalisé construit à partir de tes données Oura et Withings et de tes 4 suivis hebdomadaires de juin 2026.<br>
+  Document confidentiel · Visée informative — ne se substitue pas à un avis médical.</div>
+</div>
+
+</body>
+</html>
